@@ -55,7 +55,7 @@ public:
     Item shield;
     Item greaves;
     Item chestplate;
-    double exp;
+    long double exp;
 
     void levelUp(Player& player) {
         const double threshold = pow(1.3, player.level);

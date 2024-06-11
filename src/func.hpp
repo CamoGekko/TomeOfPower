@@ -168,9 +168,12 @@ char** readFile(const std::string& fileName, int& lineCount);
 
 Entity genEnemy(int lvl) {
     string enemyName;
-    unsigned int enemyLvl = rand() % lvl + (lvl * 1.2); 
-    int health = pow(1.4, enemyLvl);
-    int damage = pow(1.3, enemyLvl);
+    unsigned int enemyLvl = rand() % lvl + (lvl * 1.1); 
+
+    int health = lvl * (rand() % 10 + 1);
+    int damage = ((rand() % 4) + 2) * (health / lvl) * 0.5;
+
+
     double multi;
 
     int name = rand() % 4;
@@ -205,8 +208,29 @@ Entity genEnemy(int lvl) {
 }
 
 void initializeItem(Player& player, Item& item){
-    item.level = (rand() % (player.level / 4));
-    item.damage = item.level * (((rand() % 2) * 1.25) + ((rand() % 2) * -0.25));
+    if (player.level >= 4) {
+        item.level = ceil((rand() % (player.level / (rand() % 4))) + 1);
+    } else {
+        item.level = 1;
+    }
+
+
+        
+    if ( contains(item.name, "Sword") || contains(item.name, "Cursed Tome")) {
+        item.damage = item.level * (((rand() % 2) * 1) + ((rand() % 2) * -1));
+        return; // Sword equipped
+    } else if ( contains(item.name, "Greaves")) {
+        item.block = item.level * (((rand() % 2) * 1) + ((rand() % 2) * -1));
+        return; // Greaves equipped
+    } else if ( contains(item.name, "Chestplate") ){
+        item.block = item.level * (((rand() % 2) * 1) + ((rand() % 2) * -1));
+        return; // Chestplate equipped
+    } else if ( contains(item.name, "Shield")){
+        item.block = item.level * (((rand() % 2) * 1) + ((rand() % 2) * -1));
+        return; // Shield equipped       
+    } else if (item.food){
+        item.healAmount = item.level * (((rand() % 2) * 1) + ((rand() % 2) * -1));
+    }
 }
 
 
@@ -221,7 +245,17 @@ Item generateItem(Player& player) {
 
 
 void outputStats(Player& player) {
-    cout << player.name << "'s stats:\n" << "\nLevel: " << YELLOW << to_string(player.level) << RESET << "\nExperience: " << CYAN << to_string(player.exp) << RESET << "\nHealth: " << RED << to_string(player.health) << " / " << to_string(player.healthMax) << RESET << "\nDamage: " << MAGENTA << to_string(player.damage) << RESET << "\nDefense: " << BLUE << to_string(player.defense) << RESET << "\nWeight: " << BRIGHT_YELLOW << player.weight << RESET << "\nSword: " << GREEN << player.sword.name << RESET << "\nShield: " << GREEN << player.shield.name << RESET << "\nChestplate: " << GREEN << player.chestplate.name << RESET << "\nGreaves: " << GREEN << player.greaves.name << RESET << endl;
+    cout << player.name << "'s stats:\n" << 
+            "\nLevel     : " << YELLOW << to_string(player.level) << RESET << 
+            "\nExperience: " << CYAN << to_string(player.exp) << RESET << 
+            "\nHealth    : " << RED << to_string(player.health) << " / " << to_string(player.healthMax) << RESET << 
+            "\nDamage    : " << MAGENTA << to_string(player.damage) << RESET << 
+            "\nDefense   : " << BLUE << to_string(player.defense) << RESET << 
+            "\nWeight    : " << BRIGHT_YELLOW << player.weight << RESET << 
+            "\nSword     : " << GREEN << player.sword.name << RESET << " | " << RED << player.sword.damage << "DMG" << RESET << 
+            "\nShield    : " << GREEN << player.shield.name << RESET << " | " << BLUE << player.shield.block << "DEF" << RESET << 
+            "\nChestplate: " << GREEN << player.chestplate.name << RESET << " | " << BLUE << player.chestplate.block << "DEF" << RESET << 
+            "\nGreaves   : " << GREEN << player.greaves.name << RESET << " | " << BLUE << player.greaves.block << "DEF" << RESET << endl;
 }
 
 double updateStats(Game& game, Player& player) {
@@ -260,11 +294,17 @@ double updateStats(Game& game, Player& player) {
     return totalDamageReduction; // Return the total damage reduction applied
 }
 
-void outputInv(const vector<Item>& inventory, const vector<Item>& items) {
-    for (size_t counter = 0; counter < inventory.size(); ++counter) {
-        Item index = inventory[counter];
+void outputInv(const vector<Item>& items, Player& player) {
+    Game game;
+    updateStats(game, player);
+    for (int counter = 0; counter < player.inventory.size(); ++counter) {
+        Item index = items[player.inventory[counter].id];
         if (index.id >= 0 && index.id < items.size()) {
-            cout << counter + 1 << ": " << GREEN << index.name  << RESET << " | " << YELLOW << index.level << "LVL" << endl;
+            cout << counter + 1 << ": " << GREEN << index.name  << RESET << " | " <<
+                    YELLOW << index.level << "LVL" << RESET << " | " << 
+                    RED << index.damage << "DMG" << RESET << " | " <<
+                    BLUE << to_string(index.block) << "DEF" << RESET << " | " << 
+                    BRIGHT_YELLOW << index.weight << "WT" << RESET << endl;
         } else {
             cout << "Invalid item index: " << index.id << endl;
         }
@@ -288,7 +328,7 @@ bool useFood(Item& item, Player& player) {
 
 // Function to use equipment items (sword, shield, armor)
 bool useEquipment(Item& item, Player& player) {
-    if ( contains(item.name, "Sword")) {
+    if ( contains(item.name, "Sword") || contains(item.name, "Cursed Tome")) {
         player.sword = item;
         return true; // Sword equipped
     } else if ( contains(item.name, "Greaves")) {
@@ -337,7 +377,7 @@ int fight(Game& game, Player& player, vector<Item>& itemVector) {
     vector<Entity> enemies;
     bool expCalc = false;
     bool blocking = false;
-    double exp;
+    long double exp;
 
     int numEnemies = rand() % 1 + 1; // Ensure at least one enemy
     for (int i = 0; i < numEnemies; ++i) {
@@ -357,25 +397,9 @@ int fight(Game& game, Player& player, vector<Item>& itemVector) {
         }
 
         for (int i = 0; i < enemies.size(); ++i) {
-            cout << "A " << enemies[i].name << " has appeared!\n" << RED << enemies[i].health << "HP" << RESET << " | " << MAGENTA << enemies[i].damage << "DMG" << RESET << " | " << YELLOW << enemies[i].level << "LVL\n" << RESET << "1. Block\n2. Attack\n";
-
-            if (enemies[i].health > 0) {
-                int enemyDamage = enemies[i].damage;
-                signed int zero = 0;
-
-                enemyDamage = max(zero, (enemyDamage - static_cast<int>(player.defense)));
-                if (enemies[i].blocked == true){
-                    enemyDamage -= player.defense;
-                }
-                if (!((enemyDamage - player.shield.block) < 0)) {
-                    player.health -= (enemyDamage - static_cast<int>(player.defense));
-                }
-                cout << "The " << enemies[i].name << " attacks you for " << RED << max(zero, (enemyDamage - static_cast<int>(player.defense))) << RESET << " damage!\n\n\n";
-
-                outputStats(player);
-                ENDL
-
-            }
+            cout << "A " << enemies[i].name << " has appeared!\n" << RED << enemies[i].health << "HP" << RESET << " | " << MAGENTA << enemies[i].damage << "DMG" << RESET << " | " << YELLOW << enemies[i].level << "LVL\n" << RESET << "1. Block\n2. Attack\n3. Use item\n";
+            outputStats(player);
+            ENDL
             cin >> input;
 
             switch (input) {
@@ -387,14 +411,14 @@ int fight(Game& game, Player& player, vector<Item>& itemVector) {
                     // Calculate player's total damage
                     if ((rand() % 9) - player.weight > 0) {
                         enemies[i].health -= player.damage;
-                        cout << "You attacked the " << enemies[i].name << " for " << baseDamage << " damage!\n";
+                        cout << "You attacked the " << enemies[i].name << " for " << RED << baseDamage << RESET << " damage!\n";
                     } else {
                         cout << "\nYou missed!\n";
                     }
                     break;
                 }
                 case 3: {
-                    outputInv(player.inventory, itemVector);
+                    outputInv(itemVector, player);
                     cout << "Choose an item: ";
                     int choice;
                     cin >> choice;
@@ -421,6 +445,23 @@ int fight(Game& game, Player& player, vector<Item>& itemVector) {
             if (enemies[i].health < 1) {
                 enemies.erase(enemies.begin() + i);
             }
+
+            if (enemies[i].health > 0) {
+                int enemyDamage = enemies[i].damage;
+                signed int zero = 0;
+
+                enemyDamage = max(zero, (enemyDamage - static_cast<int>(player.defense)));
+                if (enemies[i].blocked == true){
+                    enemyDamage -= player.defense;
+                    enemies[i].blocked = false;
+                }
+                cout << "The " << enemies[i].name << " attacks you for " << RED << max(zero, (enemyDamage - static_cast<int>(player.defense))) << RESET << " damage!\n\n\n";
+
+                ENDL
+
+            }
+            this_thread::sleep_for(chrono::milliseconds(1000));
+            system("clear");
         }
 
         if (player.health <= 0) {
@@ -430,16 +471,15 @@ int fight(Game& game, Player& player, vector<Item>& itemVector) {
         }
 
         system("clear");
-    }
+    };
 
     Item gendItemIndex = generateItem(player); // Generate the item index
     if (gendItemIndex.id != -1) {
         player.inventory.push_back(gendItemIndex); // Push back the index to the inventory
     }
 
-    cout << "\nYou recieved a " << BLUE << gendItemIndex.name << RESET << " | " YELLOW << gendItemIndex.level << "LVL\n1. Done\n";
-    int hg;
-    cin >> hg;
+    cout << "\nYou recieved a " << GREEN << gendItemIndex.name << RESET << " | " YELLOW << gendItemIndex.level << "LVL" << RESET << "\n";
+    this_thread::sleep_for(chrono::milliseconds(1500));
 
     player.exp += exp;
 

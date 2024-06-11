@@ -96,11 +96,11 @@ int main() {
                 break;
             }
             case 2: // Show the players inventory
-                outputInv(player.inventory, items);
+                outputInv(items, player);
                 cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the input buffer
                 break;
             case 3: { // Use an item from the inventory
-                outputInv(player.inventory, items);
+                outputInv(items, player);
                 cout << "Choose an item: ";
                 int choice;
                 cin >> choice;

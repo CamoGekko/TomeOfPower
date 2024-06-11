@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <cstdlib>
+#include <cstdio>
 #include <ctime>
 #include <ncurses.h>
 #include <algorithm>
@@ -16,6 +17,9 @@
 #include <cmath>
 #include <unordered_map>
 #include <variant>
+#include <gmp.h>
+
+//#include "mod.hpp"
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/string.hpp>
@@ -88,3 +92,6 @@
 
 #define STAT_BASE_DAMAGE 3
 #define STAT_BASE_HEALTH 10
+#define STAT_BASE_DEFENSE 0
+#define STAT_BASE_LEVEL 0
+#define STAT_BASE_EXP 0.0
